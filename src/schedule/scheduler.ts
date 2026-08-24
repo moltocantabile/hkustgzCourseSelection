@@ -210,13 +210,13 @@ export function generateSchedules(input: any, coursesById: Record<string, Course
     if (req.sections && req.sections.length){
       const want = req.sections.slice();
       const beforeS = bundles.length;
-      bundles = bundles.filter(b => want.every(id => b.some(en => en.section === id)));
+      bundles = bundles.filter(b => want.some(id => b.some(en => en.section === id)));
       if (!bundles.length){
-        warnings.push(code + ': no section bundle contains ' + want.join(', ') + ' (' + beforeS + ' bundle(s) before section filter)');
+        warnings.push(code + ': no section bundle contains any of ' + want.join(', ') + ' (' + beforeS + ' bundle(s) before section filter)');
         continue;
       }
       if (bundles.length !== beforeS){
-        warnings.push(code + ': section filter ' + want.join(', ') + ' → ' + bundles.length + '/' + beforeS + ' section bundle(s)');
+        warnings.push(code + ': section filter any of ' + want.join(', ') + ' → ' + bundles.length + '/' + beforeS + ' section bundle(s)');
       }
     }
     if (opts.blocked && opts.blocked.length){

@@ -131,7 +131,7 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
     remainBad = !nBundles;
   } else if (course && sections.length){
     const all = courseBundles(course);
-    const n = all.filter(b => sections.every(id => b.some(en => en.section === id))).length;
+    const n = all.filter(b => sections.some(id => b.some(en => en.section === id))).length;
     remain = n + '/' + all.length;
     remainBad = !all.length;
   } else if (course && times.length){
@@ -187,7 +187,7 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
             <button type="button" onClick={() => removeTime(i)}>×</button>
           </span>
         ))}
-        {remain ? <span className={'sched-note' + (remainBad ? ' bad' : '')}>{item.all ? remain : remain + (sections.length ? ' bundles contain the selected section(s)' : ' bundles cover the selected time(s)')}</span> : null}
+        {remain ? <span className={'sched-note' + (remainBad ? ' bad' : '')}>{item.all ? remain : remain + (sections.length ? ' bundles contain a selected section' : ' bundles cover the selected time(s)')}</span> : null}
         {item.all ? (
           <span className="tchip">All sections<button type="button" onClick={() => onChange(Object.assign({}, item, { all: false, times: [], sections: [] }))}>×</button></span>
         ) : null}
