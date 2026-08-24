@@ -32,6 +32,10 @@ export interface Section {
   capacity: number;
   enrolled: number;
   meetings: Meeting[];
+  crseWid?: string;
+  crseComponentId?: string;
+  termId?: string;
+  acadCareer?: string;
 }
 
 export interface Course {
@@ -92,6 +96,7 @@ export interface PrereqResult {
 export interface ApiConfig {
   url: string;
   cartUrl: string;
+  enrollUrl: string;
   token: string;
   termId: string;
 }

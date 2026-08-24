@@ -48,7 +48,11 @@ export function normalizeCourse(c: any, catalogMap: Record<string, any>): Course
       primary: s.primaryComponent === 'Y',
       capacity: s.enrollmentCapacity || 0,
       enrolled: s.enrollmentNbr || 0,
-      meetings: meetings
+      meetings: meetings,
+      crseWid: cleanField(s.crseWid) || cleanField(s.modularCrseWid) || '',
+      crseComponentId: cleanField(s.crseComponentId),
+      termId: cleanField(s.termId),
+      acadCareer: cleanField(ci.academicCareer)
     };
   });
   sections.sort((a, b) => a.component.localeCompare(b.component) || a.label.localeCompare(b.label, undefined, {numeric: true}));
@@ -132,7 +136,11 @@ export function normalizeKlmsCourses(raw: any, catalogMap: Record<string, any>):
         enrolled: Number(m.enrollmentNbr) || 0,
         _rawLabel: rawLabel,
         _classCode: classCode,
-        meetings: meetings
+        meetings: meetings,
+        crseWid: cleanField(m.crseWid) || '',
+        crseComponentId: cleanField(m.crseComponentId),
+        termId: cleanField(m.termId),
+        acadCareer: cleanField(ci.academicCareer)
       });
     }
     const labelCount = {};

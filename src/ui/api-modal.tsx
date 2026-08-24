@@ -25,6 +25,10 @@ export function ApiModal({ cfg, busy, onCfg, onLoad, onClose }){
           <input value={cfg.cartUrl} onChange={set('cartUrl')} placeholder="https://…workers.dev/" spellCheck={false} />
         </label>
         <label className="api-field">
+          <span>Enroll API URL (enroll)</span>
+          <input value={cfg.enrollUrl} onChange={set('enrollUrl')} placeholder="https://…workers.dev/" spellCheck={false} />
+        </label>
+        <label className="api-field">
           <span>TOKEN</span>
           <input value={cfg.token} onChange={set('token')} type="password" autoComplete="off" placeholder="authorization token" />
         </label>

@@ -1,6 +1,6 @@
 import { LS_KEY, DAY_NAMES } from '../constants';
 import { buildCatalog } from '../data/catalog';
-import { addToSystemCart, fetchApiPayload } from '../data/api';
+import { addToSystemCart, enrollSections, fetchApiPayload } from '../data/api';
 import { mergeCourses, normalizeCourses, normalizeKlmsCourses } from '../data/normalizer';
 import { findConflicts, meetingInRanges } from '../schedule/conflict';
 import { courseDragTargets, pickTarget, pointerOverCalendar } from '../schedule/drag';
@@ -40,6 +40,7 @@ export function App(){
   const [apiOpen, setApiOpen] = React.useState(false);
   const [apiBusy, setApiBusy] = React.useState(null);
   const [cartBusy, setCartBusy] = React.useState(false);
+  const [enrollBusy, setEnrollBusy] = React.useState(false);
   const [blockedPeriods, setBlockedPeriods] = React.useState([]);
   const [containsSlots, setContainsSlots] = React.useState([]);
   const gridRef = React.useRef(null);
@@ -166,6 +167,36 @@ export function App(){
       toast('Add to cart failed: ' + ex.message);
     }finally{
       setCartBusy(false);
+    }
+  }
+
+  async function onEnroll(){
+    const token = String(apiCfg.token || '').trim();
+    if (!token){
+      toast('Set your API TOKEN first (API button)');
+      setApiOpen(true);
+      return;
+    }
+    if (!schedule.length){
+      toast('Timetable is empty — nothing to enroll');
+      return;
+    }
+    const base = String(apiCfg.enrollUrl || '').trim().replace(/\/+$/, '');
+    if (!base){
+      toast('Enroll API URL is empty — set it in the API settings');
+      setApiOpen(true);
+      return;
+    }
+    setEnrollBusy(true);
+    try{
+      const r = await enrollSections(apiCfg, schedule, coursesById);
+      let msg = 'Enrolled ' + r.added + ' section(s)';
+      if (r.failed.length) msg += ' · failed: ' + r.failed.map(f => f.classId + ' (' + f.error + ')').join(', ');
+      toast(msg);
+    }catch(ex){
+      toast('Enroll failed: ' + ex.message);
+    }finally{
+      setEnrollBusy(false);
     }
   }
 
@@ -532,6 +563,7 @@ export function App(){
           </label>
         </div>
         <button className="hbtn" title="Add every section on the timetable to the HKUST(GZ) SISN / KLMS course cart (uses the API TOKEN)" onClick={onAddToSystemCart} disabled={cartBusy}>{cartBusy ? 'Adding…' : 'Add to system cart'}</button>
+        <button className="hbtn" title="Enroll every section on the timetable (uses the API TOKEN; parallel requests)" onClick={onEnroll} disabled={enrollBusy}>{enrollBusy ? 'Enrolling…' : 'Enroll'}</button>
         <div className="spacer"></div>
         <button className="hbtn danger" onClick={clearSchedule}>Clear timetable</button>
       </header>
