@@ -100,28 +100,28 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
   const [slot, setSlot] = React.useState('');
   const course = courses.find(c => c.code === item.code) || null;
   const times = item.times || [];
+  const sections = item.sections || [];
   const slots = React.useMemo(() => courseTimeOptions(course), [course]);
   React.useEffect(() => { setSlot('__all__'); }, [item.code]);
   function addTimeFromClock(){
     if (times.some(t => t.day === day && t.time === time)) return;
     onChange(Object.assign({}, item, { all: false, times: times.concat([{ day: day, time: time }]) }));
   }
-  function addTimeFromCourse(){
+  function addSectionFromCourse(){
     if (slot === '__all__'){
-      onChange(Object.assign({}, item, { all: true, times: [] }));
+      onChange(Object.assign({}, item, { all: true, times: [], sections: [] }));
       return;
     }
     const hit = slots.find(s => slotKey(s) === slot);
     if (!hit) return;
-    const extra = [];
-    hit.times.forEach(tm => {
-      if (!times.concat(extra).some(t => t.day === tm.day && t.time === tm.time)) extra.push(tm);
-    });
-    if (!extra.length) return;
-    onChange(Object.assign({}, item, { all: false, times: times.concat(extra) }));
+    if (sections.some(id => id === hit.id)) return;
+    onChange(Object.assign({}, item, { all: false, times: [], sections: sections.concat([hit.id]) }));
   }
   function removeTime(idx){
     onChange(Object.assign({}, item, { times: times.filter((_, i) => i !== idx) }));
+  }
+  function removeSection(idx){
+    onChange(Object.assign({}, item, { sections: sections.filter((_, i) => i !== idx) }));
   }
   let remain = null;
   let remainBad = false;
@@ -129,6 +129,11 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
     const nBundles = courseBundles(course).length;
     remain = nBundles ? nBundles + ' section bundle(s)' : 'No valid section combination for this course';
     remainBad = !nBundles;
+  } else if (course && sections.length){
+    const all = courseBundles(course);
+    const n = all.filter(b => sections.every(id => b.some(en => en.section === id))).length;
+    remain = n + '/' + all.length;
+    remainBad = !all.length;
   } else if (course && times.length){
     const all = courseBundles(course);
     remain = all.filter(b => bundleCoversTimes(b, times)).length + '/' + all.length;
@@ -143,7 +148,7 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
         </div>
         <div className="sched-radio-body">
       <div className="sched-row-top">
-        <CourseCombo value={item.code} courses={courses} used={used} onChange={(code) => onChange(Object.assign({}, item, { code: code, times: [], all: false, enabled: true }))} inputRef={inputRef} />
+        <CourseCombo value={item.code} courses={courses} used={used} onChange={(code) => onChange(Object.assign({}, item, { code: code, times: [], sections: [], all: false, enabled: true }))} inputRef={inputRef} />
         <button className="sbtn rm icon" title="Remove course" aria-label="Remove course" onClick={onRemove}><TrashIcon /></button>
       </div>
       <div className="sched-row-times">
@@ -154,7 +159,7 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
               {course ? <option value="__all__">All sections</option> : null}
               {slots.map(s => <option key={slotKey(s)} value={slotKey(s)}>{s.label} {s.component ? '(' + s.component + ') ' : ''}· {s.summary}</option>)}
             </select>
-            <button className="sbtn" onClick={addTimeFromCourse} disabled={!course || !slot}>{slot === '__all__' ? 'Use all sections' : 'Add this class time'}</button>
+            <button className="sbtn" onClick={addSectionFromCourse} disabled={!course || !slot}>{slot === '__all__' ? 'Use all sections' : 'Add this section'}</button>
           </div>
         ) : (
           <div className="sched-time-add">
@@ -167,17 +172,26 @@ export function SchedCourseRow({ item, courses, used, mode, onChange, onRemove, 
             <button className="sbtn" onClick={addTimeFromClock} disabled={!item.code}>Add time</button>
           </div>
         )}
+        {sections.map((sid, i) => {
+          const s = slots.find(x => x.id === sid);
+          return (
+            <span className="tchip" key={sid}>
+              {s ? s.label + (s.component ? ' (' + s.component + ')' : '') + ' · ' + s.summary : sid}
+              <button type="button" onClick={() => removeSection(i)}>×</button>
+            </span>
+          );
+        })}
         {times.map((tm, i) => (
           <span className="tchip" key={i}>
             {slotLabel(tm)}{tm.labels && tm.labels.length ? ' · ' + tm.labels.join('/') : ''}
             <button type="button" onClick={() => removeTime(i)}>×</button>
           </span>
         ))}
-        {remain ? <span className={'sched-note' + (remainBad ? ' bad' : '')}>{item.all ? remain : remain + ' bundles cover the selected time(s)'}</span> : null}
+        {remain ? <span className={'sched-note' + (remainBad ? ' bad' : '')}>{item.all ? remain : remain + (sections.length ? ' bundles contain the selected section(s)' : ' bundles cover the selected time(s)')}</span> : null}
         {item.all ? (
-          <span className="tchip">All sections<button type="button" onClick={() => onChange(Object.assign({}, item, { all: false, times: [] }))}>×</button></span>
+          <span className="tchip">All sections<button type="button" onClick={() => onChange(Object.assign({}, item, { all: false, times: [], sections: [] }))}>×</button></span>
         ) : null}
-        {course && !item.all && !times.length && parallelClassCount(course) > 1 ? <span className="sched-note">{parallelClassCount(course)} sections</span> : null}
+        {course && !item.all && !sections.length && !times.length && parallelClassCount(course) > 1 ? <span className="sched-note">{parallelClassCount(course)} sections</span> : null}
       </div>
         </div>
       </div>
@@ -221,9 +235,9 @@ export function SchedulerTab({ courses, coursesById, onApply, focusTick, planner
     (lockedSchedule || []).forEach(en => {
       if (!en || !en.course || seen[en.course]) return;
       seen[en.course] = true;
-      next.push({ id: uid(), code: en.course, times: [], all: true, enabled: true });
+      next.push({ id: uid(), code: en.course, times: [], sections: [], all: true, enabled: true });
     });
-    if (!next.length) next.push({ id: uid(), code: '', times: [], all: false, enabled: true });
+    if (!next.length) next.push({ id: uid(), code: '', times: [], sections: [], all: false, enabled: true });
     setItems(next);
     setResult(null);
   }
@@ -231,7 +245,9 @@ export function SchedulerTab({ courses, coursesById, onApply, focusTick, planner
     setBusy(true);
     setResult(null);
     setTimeout(() => {
-      const reqs = items.filter(it => it.code && it.enabled !== false).map(it => ({ code: it.code, times: it.all ? [] : (it.times || []) }));
+      const reqs = items.filter(it => it.code && it.enabled !== false).map(it => mode === 'course'
+        ? { code: it.code, times: [], sections: it.all ? [] : (it.sections || []) }
+        : { code: it.code, times: it.times || [], sections: [] });
       const opts = { collectLimit: 1000, showLimit: 1000, rankBy: rank, blocked: blockedPeriods || [] };
       const r = generateSchedules(reqs, coursesById, Object.assign({ locked: lockedSchedule || [] }, opts));
       setResult(r);
@@ -268,9 +284,9 @@ export function SchedulerTab({ courses, coursesById, onApply, focusTick, planner
     return passSlots && passContains && passBlocked;
   }) : [];
   const hint = mode === 'course'
-    ? 'Pick a class time, or All to search every section'
+    ? 'Pick the section(s) to pin, or All to search every section'
     : 'Pick any clock time, keep sections that cover it';
-  const help = 'Add courses from the searchable list. A generated plan adds new courses, or replaces their sections if they are already on the timetable — other classes stay untouched. In Course first, choose All to search every section and rank by evenness / walking distance. Lecture/Tutorial same-index pairing is honoured.';
+  const help = 'Add courses from the searchable list. A generated plan adds new courses, or replaces their sections if they are already on the timetable — other classes stay untouched. In Course first, choose All to search every section or pin specific sections and rank by evenness / walking distance. Lecture/Tutorial same-index pairing is honoured.';
   return (
     <div>
       <div className="mode-switch">
@@ -299,7 +315,7 @@ export function SchedulerTab({ courses, coursesById, onApply, focusTick, planner
             onChange={(next) => setItems(prev => prev.map(x => x.id === it.id ? next : x))}
             onRemove={() => setItems(prev => prev.filter(x => x.id !== it.id))} />
         ))}
-        <button className="sched-add" onClick={() => setItems(prev => prev.concat([{ id: uid(), code: '', times: [], enabled: true }]))}>+ Add course</button>
+        <button className="sched-add" onClick={() => setItems(prev => prev.concat([{ id: uid(), code: '', times: [], sections: [], enabled: true }]))}>+ Add course</button>
       </div>
       <div className="sched-actions">
         <button className="sched-btn" onClick={generate} disabled={busy || !items.some(it => it.code && it.enabled !== false)}>{busy ? 'Generating…' : 'Generate Schedule'}</button>

@@ -34,7 +34,8 @@ export function normalizeSchedRequests(input: any){
         const day = Number(t.day), time = Number(t.time);
         if (day >= 1 && day <= 5 && isFinite(time)) times.push({ day: day, time: time });
       }
-      out.push({ code: code, times: times });
+      const sections = ((r && r.sections) || []).filter(s => s && typeof s === 'string');
+      out.push({ code: code, times: times, sections: sections });
     }
     return out;
   }
@@ -42,7 +43,7 @@ export function normalizeSchedRequests(input: any){
   const m = String(input || '').matchAll(CODE_RE);
   for (const hit of m){
     const c = normCode(hit[0]);
-    if (c && !seen[c]){ seen[c] = true; codes.push({ code: c, times: [] }); }
+    if (c && !seen[c]){ seen[c] = true; codes.push({ code: c, times: [], sections: [] }); }
   }
   return codes;
 }
@@ -205,6 +206,18 @@ export function generateSchedules(input: any, coursesById: Record<string, Course
         continue;
       }
       warnings.push(code + ': time filter ' + label + ' → ' + bundles.length + '/' + before + ' section bundle(s)');
+    }
+    if (req.sections && req.sections.length){
+      const want = req.sections.slice();
+      const beforeS = bundles.length;
+      bundles = bundles.filter(b => want.every(id => b.some(en => en.section === id)));
+      if (!bundles.length){
+        warnings.push(code + ': no section bundle contains ' + want.join(', ') + ' (' + beforeS + ' bundle(s) before section filter)');
+        continue;
+      }
+      if (bundles.length !== beforeS){
+        warnings.push(code + ': section filter ' + want.join(', ') + ' → ' + bundles.length + '/' + beforeS + ' section bundle(s)');
+      }
     }
     if (opts.blocked && opts.blocked.length){
       const beforeB = bundles.length;

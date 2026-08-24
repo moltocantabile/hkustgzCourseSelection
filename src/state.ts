@@ -4,7 +4,7 @@ import { makeEntry } from './schedule/sections';
 import type { ApiConfig, Course, Entry, Planner, TimeRange } from './types';
 
 export function defaultPlanner(): Planner {
-  return { mode: 'time', rank: 'even', items: [{ id: uid(), code: '', times: [], all: false, enabled: true }] };
+  return { mode: 'time', rank: 'even', items: [{ id: uid(), code: '', times: [], sections: [], all: false, enabled: true }] };
 }
 export function sanitizePlanner(raw: any): Planner {
   const p = raw || {};
@@ -15,9 +15,10 @@ export function sanitizePlanner(raw: any): Planner {
     all: wasOnly || !!(it && it.all),
     enabled: it && typeof it.enabled === 'boolean' ? it.enabled : true,
     times: ((it && it.times) || []).filter(t => t && t.day >= 1 && t.day <= 5 && isFinite(Number(t.time)))
-      .map(t => ({ day: Number(t.day), time: Number(t.time), labels: t.labels || null }))
+      .map(t => ({ day: Number(t.day), time: Number(t.time), labels: t.labels || null })),
+    sections: (Array.isArray(it && it.sections) ? it.sections : []).filter(s => typeof s === 'string' && s)
   }));
-  if (!items.length) items.push({ id: uid(), code: '', times: [], all: false, enabled: true });
+  if (!items.length) items.push({ id: uid(), code: '', times: [], sections: [], all: false, enabled: true });
   return {
     mode: (p.mode === 'course' || wasOnly) ? 'course' : 'time',
     rank: p.rank === 'distance' ? 'distance' : 'even',
@@ -80,7 +81,7 @@ export function plannerForSave(planner: Planner){
   return {
     mode: planner.mode,
     rank: planner.rank,
-    items: (planner.items || []).map(it => ({ code: it.code || '', times: it.times || [], all: !!it.all, enabled: it && typeof it.enabled === 'boolean' ? it.enabled : true }))
+    items: (planner.items || []).map(it => ({ code: it.code || '', times: it.times || [], sections: it.sections || [], all: !!it.all, enabled: it && typeof it.enabled === 'boolean' ? it.enabled : true }))
   };
 }
 export function hydrateSchedule(arr: any, courseList: Course[]): Entry[] {

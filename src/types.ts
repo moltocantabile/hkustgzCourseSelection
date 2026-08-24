@@ -108,6 +108,7 @@ export interface PlannerItem {
   all: boolean;
   enabled: boolean;
   times: PlannerTime[];
+  sections: string[];
 }
 
 export interface Planner {
