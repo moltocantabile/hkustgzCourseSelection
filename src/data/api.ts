@@ -109,18 +109,18 @@ export async function enrollSections(cfg: ApiConfig, schedule: Entry[], coursesB
 }
 
 async function enrollOne(base: string, token: string, type: string, sec: Section){
-  const crseWid = String(sec.crseWid || '').trim();
-  const termId = String(sec.termId || '').trim();
-  if (!crseWid) throw new Error('missing crseWid');
-  if (!termId) throw new Error('missing termId');
   const payload = {
     classId: sec.id,
-    crseWid: crseWid,
-    termId: termId,
+    crseWid: String(sec.crseWid || '').trim() || undefined,
+    termId: String(sec.termId || '').trim() || undefined,
     crseComponentId: String(sec.crseComponentId || '').trim() || undefined,
     acadCareer: String(sec.acadCareer || '').trim() || undefined,
     enrollType: 'NORMAL'
   };
+  // Send every field the section carries; optional fields are left out only
+  // when the data does not provide them. Do not drop requests just because a
+  // field marked required is absent.
+  for (const k of Object.keys(payload)) if (payload[k] === undefined) delete payload[k];
   const qs = new URLSearchParams();
   qs.set('TOKEN', token);
   qs.set('TYPE', type);

@@ -137,7 +137,9 @@ export function normalizeKlmsCourses(raw: any, catalogMap: Record<string, any>):
         _rawLabel: rawLabel,
         _classCode: classCode,
         meetings: meetings,
-        crseWid: cleanField(m.crseWid) || '',
+        // KLMS data has no 32-hex crseWid; the API accepts the numeric course
+        // id in its place, so fall back to the module / course ids.
+        crseWid: cleanField(m.crseWid) || cleanField(m.modularCrseId) || cleanField(m.crseId) || cleanField(m.parCrseId) || '',
         crseComponentId: cleanField(m.crseComponentId),
         termId: cleanField(m.termId),
         acadCareer: cleanField(ci.academicCareer)
