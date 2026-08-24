@@ -533,8 +533,6 @@ export function App(){
         </div>
         <button className="hbtn" title="Add every section on the timetable to the HKUST(GZ) SISN / KLMS course cart (uses the API TOKEN)" onClick={onAddToSystemCart} disabled={cartBusy}>{cartBusy ? 'Adding…' : 'Add to system cart'}</button>
         <div className="spacer"></div>
-        <button className="hbtn primary" onClick={() => { setTab('sched'); setRightOpen(true); setSchedFocusTick(t => t + 1); }}>Generate Schedule</button>
-        <button className="hbtn" onClick={() => openDeps(selected || '')}>Dependencies</button>
         <button className="hbtn danger" onClick={clearSchedule}>Clear timetable</button>
       </header>
       <main className={'app-main' + (leftOpen ? '' : ' left-collapsed') + (rightOpen ? '' : ' right-collapsed')}>
