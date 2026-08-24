@@ -33,6 +33,10 @@ export function ApiModal({ cfg, busy, onCfg, onLoad, onClose }){
           <input value={cfg.token} onChange={set('token')} type="password" autoComplete="off" placeholder="authorization token" />
         </label>
         <label className="api-field">
+          <span>Student ID</span>
+          <input value={cfg.studentId} onChange={set('studentId')} autoComplete="off" placeholder="student id (sent with enroll requests)" spellCheck={false} />
+        </label>
+        <label className="api-field">
           <span>TERM (academic term)</span>
           <select value={cfg.termId} onChange={set('termId')}>
             {termOptions.map(o => <option key={o.id} value={o.id}>{o.label} ({o.id})</option>)}

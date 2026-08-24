@@ -43,7 +43,7 @@ export function loadPlannerState(): Planner {
 }
 export const API_LS_KEY = 'hkust-course-planner-api-v1';
 export function defaultApiCfg(): ApiConfig {
-  return { url: 'https://getclasslist.moltocantabile.workers.dev/', cartUrl: 'https://addtocart.moltocantabile.workers.dev/', enrollUrl: 'https://enroll.moltocantabile.workers.dev/', token: '', termId: '2610' };
+  return { url: 'https://getclasslist.moltocantabile.workers.dev/', cartUrl: 'https://addtocart.moltocantabile.workers.dev/', enrollUrl: 'https://enroll.moltocantabile.workers.dev/', token: '', studentId: '', termId: '2610' };
 }
 export function loadApiCfg(): ApiConfig {
   try{
@@ -54,6 +54,7 @@ export function loadApiCfg(): ApiConfig {
       cartUrl: typeof parsed.cartUrl === 'string' && parsed.cartUrl ? parsed.cartUrl : d.cartUrl,
       enrollUrl: typeof parsed.enrollUrl === 'string' && parsed.enrollUrl ? parsed.enrollUrl : d.enrollUrl,
       token: typeof parsed.token === 'string' ? parsed.token : '',
+      studentId: typeof parsed.studentId === 'string' ? parsed.studentId : '',
       termId: typeof parsed.termId === 'string' && parsed.termId ? parsed.termId : d.termId
     };
   }catch(e){

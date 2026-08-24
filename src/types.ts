@@ -98,6 +98,7 @@ export interface ApiConfig {
   cartUrl: string;
   enrollUrl: string;
   token: string;
+  studentId: string;
   termId: string;
 }
 

@@ -101,20 +101,22 @@ export async function enrollSections(cfg: ApiConfig, schedule: Entry[], coursesB
     const type = (c.cartSystem) ? c.cartSystem : ((c.klms) ? 'klms' : 'sisn');
     tasks.push({ classId: en.section, type: type, sec: sec });
   }
-  const results = await Promise.all(tasks.map(t => enrollOne(base, token, t.type, t.sec)
+  const studentId = String(cfg.studentId || '').trim();
+  const results = await Promise.all(tasks.map(t => enrollOne(base, token, t.type, t.sec, studentId)
     .then(() => null)
     .catch(ex => ({ classId: t.classId, error: ex && ex.message ? ex.message : String(ex) }))));
   const failed = results.filter(r => r != null);
   return { added: tasks.length - failed.length, failed: failed };
 }
 
-async function enrollOne(base: string, token: string, type: string, sec: Section){
+async function enrollOne(base: string, token: string, type: string, sec: Section, studentId: string){
   const payload = {
     classId: sec.id,
     crseWid: String(sec.crseWid || '').trim() || undefined,
     termId: String(sec.termId || '').trim() || undefined,
     crseComponentId: String(sec.crseComponentId || '').trim() || undefined,
     acadCareer: String(sec.acadCareer || '').trim() || undefined,
+    studentId: studentId || undefined,
     enrollType: 'NORMAL'
   };
   // Send every field the section carries; optional fields are left out only
